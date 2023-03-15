@@ -10,7 +10,7 @@ namespace HotelListing.API.Repository
 
         public GenericRepository(HotelListingDbContext context)
         {
-            this._context = context;
+            _context = context;
         }
 
 
