@@ -11,10 +11,12 @@ namespace HotelListing.API.Controllers
     public class AccountController : ControllerBase
     {
         private readonly IAuthManager _authManager;
+        private readonly ILogger<AccountController> _logger;
 
-        public AccountController(IAuthManager authManager)
+        public AccountController(IAuthManager authManager, ILogger<AccountController> logger)
         {
             _authManager = authManager;
+            _logger = logger;
         }
 
         //POST: api/Account/register
@@ -25,18 +27,20 @@ namespace HotelListing.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> Register([FromBody] ApiUserDto userDto)
         {
+            _logger.LogInformation($"Registration Attempt for {userDto.Email}");
+           
             var errors = await _authManager.UserRegister(userDto);
 
-            if (errors.Any())
-            {
-                foreach (var error in errors)
+                if (errors.Any())
                 {
-                    ModelState.AddModelError(error.Code, error.Description);
+                    foreach (var error in errors)
+                    {
+                        ModelState.AddModelError(error.Code, error.Description);
+                    }
+                    return BadRequest(ModelState);
                 }
-                return BadRequest(ModelState);
-
-            }
-            return Ok();
+                return Ok();
+            
         }
 
         //POST: api/Account/login
@@ -47,11 +51,16 @@ namespace HotelListing.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> Login([FromBody] LoginDto loginDto)
         {
-            var authResponseDto = await _authManager.Login(loginDto);
+            _logger.LogInformation($"Login Attempt for {loginDto.Email}");
 
-            if (authResponseDto == null) { return Unauthorized(); }
+                var authResponseDto = await _authManager.Login(loginDto);
 
-            return Ok(authResponseDto);
+                if (authResponseDto == null) { return Unauthorized(); }
+
+                return Ok(authResponseDto);
+            
+
+            
         }
 
         //POST: api/Account/adminRegister
@@ -63,18 +72,22 @@ namespace HotelListing.API.Controllers
         [Authorize(Roles ="Administrator")]
         public async Task<ActionResult> AdminRegister([FromBody] ApiAdminDto adminDto)
         {
-            var errors = await _authManager.AdminRegister(adminDto);
+            _logger.LogInformation($"Admin Registration Attempt for {adminDto.Email}");
 
-            if (errors.Any())
-            {
-                foreach (var error in errors)
+            
+                var errors = await _authManager.AdminRegister(adminDto);
+
+                if (errors.Any())
                 {
-                    ModelState.AddModelError(error.Code, error.Description);
-                }
-                return BadRequest(ModelState);
+                    foreach (var error in errors)
+                    {
+                        ModelState.AddModelError(error.Code, error.Description);
+                    }
+                    return BadRequest(ModelState);
 
-            }
-            return Ok();
+                }
+                return Ok();
+            
         }
 
         //POST: api/Account/refreshtoken
@@ -85,11 +98,17 @@ namespace HotelListing.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> RefreshToken([FromBody] AuthResponseDto request)
         {
-            var authResponse = await _authManager.VerifyRefreshToken(request);
+            _logger.LogInformation($"Refresh Token Attempt for {request.UserId}");
 
-            if (authResponse == null) { return Unau thorized(); }
+                var authResponse = await _authManager.VerifyRefreshToken(request);
 
-            return Ok(authResponse);
+                if (authResponse == null) { return Unauthorized(); }
+
+                return Ok(authResponse);
+
+            
+
+            
         }
 
     }

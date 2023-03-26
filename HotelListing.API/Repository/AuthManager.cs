@@ -15,16 +15,18 @@ namespace HotelListing.API.Repository
         private readonly IMapper _mapper;
         private readonly UserManager<ApiUser> _userManager;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<AuthManager> _logger;
         private ApiUser _user;
 
         private const string _loginProvider = "HotelListingApi";
         private const string _refreshToken = "RefreshToken";
 
-        public AuthManager(IMapper mapper, UserManager<ApiUser> userManager, IConfiguration configuration)
+        public AuthManager(IMapper mapper, UserManager<ApiUser> userManager, IConfiguration configuration, ILogger<AuthManager> logger)
         {
             _mapper = mapper;
             _userManager = userManager;
             _configuration = configuration;
+            _logger = logger;
         }
 
 
@@ -61,13 +63,24 @@ namespace HotelListing.API.Repository
 
         public async Task<AuthResponseDto> Login(LoginDto loginDto)
         {
+            _logger.LogInformation($"Looking for user with email {loginDto.Email}");
             _user = await _userManager.FindByEmailAsync(loginDto.Email);
             bool isValidUser = await _userManager.CheckPasswordAsync(_user, loginDto.Password);
 
-            if (_user == null || isValidUser == false) { return null; }
+            if (_user == null || isValidUser == false) 
+            {
+                _logger.LogWarning($"User with email {loginDto.Email} was not found. ");
+                return null; 
+            }
 
             var token = await GenerateToken();
-            return new AuthResponseDto { Token = token, UserId = _user.Id, RefreshToken = await CreateRefreshToken() };
+            _logger.LogInformation($"Token generated for  {loginDto.Email} | Token: {token}");
+            return new AuthResponseDto 
+            { 
+                Token = token,
+                UserId = _user.Id, 
+                RefreshToken = await CreateRefreshToken() 
+            };
         }
 
         public async Task<string> GenerateToken()
