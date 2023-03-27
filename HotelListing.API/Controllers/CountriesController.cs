@@ -22,8 +22,8 @@ namespace HotelListing.API.Controllers
 
         public CountriesController(IMapper mapper, ICountriesRepository countriesRepository, ILogger<CountriesController> logger)
         {
-            this._mapper = mapper;
-            this._countriesRepository = countriesRepository;
+            _mapper = mapper;
+            _countriesRepository = countriesRepository;
             _logger = logger;
         }
 
@@ -31,8 +31,7 @@ namespace HotelListing.API.Controllers
         [HttpGet("GetAll")]
         public async Task<ActionResult<IEnumerable<GetCountryDto>>> GetCountries()
         {
-            var countriesGot = await _countriesRepository.GetAllAsync();
-            var countries = _mapper.Map<List<GetCountryDto>>(countriesGot);
+            var countries = await _countriesRepository.GetAllAsync<GetCountryDto>();
             return Ok(countries);
         }
 
